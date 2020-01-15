@@ -8,7 +8,7 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 /**
  * @author shenhan
@@ -35,11 +35,37 @@ public class UserServiceTest {
         PowerMockito.whenNew(UserDao.class).withAnyArguments().thenReturn(userDao);
         PowerMockito.when(userDao.queryByName(Mockito.argThat(new MyArgumentMatcher()))).thenReturn("沈涵");
         UserService service = new UserService();
-        assertEquals("沈涵",service.find("Alex"));
-        assertEquals("沈涵",service.find("shenhan"));
-        assertEquals("沈涵",service.find("liushuang"));
-        assertEquals("沈涵",service.find("Tony"));
+        assertEquals("沈涵", service.find("Alex"));
+        assertEquals("沈涵", service.find("shenhan"));
+        assertEquals("沈涵", service.find("liushuang"));
+        assertEquals("沈涵", service.find("Tony"));
+    }
 
+    @Test
+    public void findWithAnswer() throws Exception {
+        final UserDao userDao = PowerMockito.mock(UserDao.class);
+        PowerMockito.whenNew(UserDao.class).withAnyArguments().thenReturn(userDao);
+        PowerMockito.when(userDao.queryByName(Mockito.anyString())).thenAnswer(invocation -> {
+//        PowerMockito.when(userDao.queryByName(Mockito.anyString())).then(invocation -> {
+            String arg = String.valueOf(invocation.getArguments()[0]);
+            switch (arg) {
+                case "Chris":
+                    return "wuyifan";
+                case "Jacky":
+                    return "mayun";
+                default:
+                    throw new RuntimeException("Not support " + arg);
+            }
+        });
+        UserService service = new UserService();
+        assertEquals("wuyifan", service.find("Chris"));
+        assertEquals("mayun", service.find("Jacky"));
+        try {
+            assertEquals("沈涵", service.find("Js"));
+            fail("never process to here is right");
+        } catch (Exception e) {
+            assertTrue(e instanceof RuntimeException);
+        }
     }
 
     static class MyArgumentMatcher implements ArgumentMatcher<String> {
